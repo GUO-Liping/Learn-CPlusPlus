@@ -3,17 +3,18 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "D:\\CPP_library\\eigen\\eigen-3.4.0\\**"
             ],
             "defines": [
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE"
             ],
-            "compilerPath": "D:\\mingw64\\bin\\gcc.exe",//只需要把E:\\C++改成自己代码的工作路径即可
+            "compilerPath": "D:\\msys64\\ucrt64\\bin\\gcc.exe",
             "cStandard": "c17",
-            "intelliSenseMode": "windows-gcc-x64",
-            "cppStandard": "c++17"
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "windows-gcc-x64"
         }
     ],
     "version": 4
