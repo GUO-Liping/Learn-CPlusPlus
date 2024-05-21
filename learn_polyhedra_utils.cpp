@@ -439,6 +439,108 @@ vector<Vector3r> fillBox_cpp(Vector3r minCoord, Vector3r maxCoord, Vector3r size
 	return v;
 }
 
+
+//**********************************************************************************
+//generate "packing" of non-overlapping polyhedrons
+vector<Vector3r> my_fillBox_cpp(Vector3r minCoord, Vector3r maxCoord, Vector3r sizemin, Vector3r sizemax, Vector3r ratio, int seed, shared_ptr<Material> mat)
+{
+	// vector<Vector3r>：这部分声明了一个向量，其中的每个元素都是 Vector3r 类型的向量。
+	// 例如vector<Vector3r> v1 可以存储多个三维向量，如 { {1.0, 2.0, 3.0}, {4.0, 5.0, 6.0}, {7.0, 8.0, 9.0} }
+	vector<Vector3r> v;
+	Polyhedra        trialP;
+	Polyhedron       trial, trial_moved;
+	srand(seed);
+	int                      it = 0;
+	vector<Polyhedron>       polyhedrons;
+
+	// vector<vector<Vector3r>>声明了一个二维向量，但这次的每个元素都是一个 vector<Vector3r> 类型的向量。
+	//例如 vv = { { {x1, y1, z1}, {x2, y2, z2}, {x3, y3, z3} },
+    //            { {x4, y4, z4}, {x5, y5, z5}, {x6, y6, z6} } }
+	vector<vector<Vector3r>> vv;
+	Vector3r                 position;
+	bool                     intersection;
+	int                      count = 0;
+
+	bool fixed_ratio = 0;
+	if (ratio[0] > 0 && ratio[1] > 0 && ratio[2] > 0) {
+		fixed_ratio = 1;
+		sizemax[0]  = min(min(sizemax[0] / ratio[0], sizemax[1] / ratio[1]), sizemax[2] / ratio[2]);
+		sizemin[0]  = max(max(sizemin[0] / ratio[0], sizemin[1] / ratio[1]), sizemin[2] / ratio[2]);
+	}
+
+	//it - number of trials to make packing possibly more/less dense
+	Vector3r random_size;
+	while (it < 1000) {
+		it = it + 1;
+		if (it == 1) {
+			trialP.Clear();
+			trialP.seed = rand();
+			if (fixed_ratio) trialP.size = (rand() * (sizemax[0] - sizemin[0]) / RAND_MAX + sizemin[0]) * ratio;
+			else
+				trialP.size
+				        = Vector3r(rand() * (sizemax[0] - sizemin[0]), rand() * (sizemax[1] - sizemin[1]), rand() * (sizemax[2] - sizemin[2]))
+				                / RAND_MAX
+				        + sizemin;
+			trialP.Initialize();
+			trial                  = trialP.GetPolyhedron();
+			Matrix3r       rot_mat = (trialP.GetOri()).toRotationMatrix();
+			Transformation t_rot(
+			        rot_mat(0, 0),
+			        rot_mat(0, 1),
+			        rot_mat(0, 2),
+			        rot_mat(1, 0),
+			        rot_mat(1, 1),
+			        rot_mat(1, 2),
+			        rot_mat(2, 0),
+			        rot_mat(2, 1),
+			        rot_mat(2, 2),
+			        1);
+			std::transform(trial.points_begin(), trial.points_end(), trial.points_begin(), t_rot);
+		}
+		position = Vector3r(rand() * (maxCoord[0] - minCoord[0]), rand() * (maxCoord[1] - minCoord[1]), rand() * (maxCoord[2] - minCoord[2])) / RAND_MAX
+		        + minCoord;
+
+		//move CGAL structure Polyhedron
+		Transformation transl(CGAL::TRANSLATION, ToCGALVector(position));
+		trial_moved = trial;
+		std::transform(trial_moved.points_begin(), trial_moved.points_end(), trial_moved.points_begin(), transl);
+		//calculate plane equations
+		std::transform(trial_moved.facets_begin(), trial_moved.facets_end(), trial_moved.planes_begin(), Plane_equation());
+
+		intersection = false;
+		//call test with boundary
+		for (Polyhedron::Vertex_iterator vi = trial_moved.vertices_begin(); (vi != trial_moved.vertices_end()) && (!intersection); vi++) {
+			intersection = (vi->point().x() < minCoord[0]) || (vi->point().x() > maxCoord[0]) || (vi->point().y() < minCoord[1])
+			        || (vi->point().y() > maxCoord[1]) || (vi->point().z() < minCoord[2]) || (vi->point().z() > maxCoord[2]);
+		}
+		//call test with other polyhedrons
+		for (vector<Polyhedron>::iterator a = polyhedrons.begin(); (a != polyhedrons.end()) && (!intersection); a++) {
+			intersection = do_intersect(*a, trial_moved);
+			if (intersection) break;
+		}
+		if (!intersection) {
+			polyhedrons.push_back(trial_moved);
+			v.clear();
+			for (Polyhedron::Vertex_iterator vi = trial_moved.vertices_begin(); vi != trial_moved.vertices_end(); vi++) {
+				v.push_back(FromCGALPoint(vi->point()));
+			}
+			vv.push_back(v);
+			it = 0;
+			count++;
+		}
+	}
+	cout << "generated " << count << " polyhedrons" << endl;
+
+	//can't be used - no information about material
+	Scene* scene = Omega::instance().getScene().get();
+	for (vector<vector<Vector3r>>::iterator p = vv.begin(); p != vv.end(); ++p) {
+		shared_ptr<Body> BP = NewPolyhedra(*p, mat);
+		BP->shape->color    = Vector3r(double(rand()) / RAND_MAX, double(rand()) / RAND_MAX, double(rand()) / RAND_MAX);
+		scene->bodies->insert(BP);
+	}
+	return v;
+}
+
 //**************************************************************************
 /* Generate truncated icosahedron*/
 vector<Vector3r> TruncIcosaHedPoints(Vector3r radii)

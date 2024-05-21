@@ -21,7 +21,7 @@ y_max = np.max(p_all_xyz[:,1])
 z_min = np.min(p_all_xyz[:,2])
 z_max = np.max(p_all_xyz[:,2])
 
-# 平面内一点坐标
+# 法平面内一点坐标,每三个面有一个交点P1与P7
 pc1_xyz = p1_xyz
 pc2_xyz = p1_xyz
 pc3_xyz = p1_xyz
