@@ -23,12 +23,12 @@ int main()
     cout << "aa_name=" << (*p).aa_name << endl;
     cout << "aa_name=" << p -> aa_name << endl;
 
-    cout << "裸指针的值" << p  << endl;
-    cout << "裸指针的值" << &p  << endl;
+    cout << "(p)裸指针的值" << p  << endl;
+    cout << "(&p)裸指针的值" << &p  << endl;
     //cout << "裸指针的值" << *p  << endl;
     //cout << "unique指针的值" << *up1  << endl;
-    cout << "unique指针.get()的值" << up1.get() << endl;
-    cout << "unique指针的地址" << &up1 << endl;
+    cout << "unique指针up1.get()的值" << up1.get() << endl;
+    cout << "unique指针(&up1)的地址" << &up1 << endl;
     
     // delete p;
 }
