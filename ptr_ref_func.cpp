@@ -20,6 +20,11 @@ void increase_reference(int& value)
     value++;
 }
 
+void increase_ref_pointer(int*& value)
+{
+    (*value)++;
+}
+
 int main()
 {
     int a = 1;
@@ -37,6 +42,9 @@ int main()
     increase_reference(a);
     std::cout << "increase_reference(a) = " << a << std::endl;
 
+    int* ptr = &a;
+    increase_ref_pointer(ptr);
+    std::cout << "increase_ref_pointer(ptr) = " << a << std::endl;
 
     return 0;
 }
