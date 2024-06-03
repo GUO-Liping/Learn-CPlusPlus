@@ -3,7 +3,7 @@
 #include <ctime>
 #include <cmath>
 
-// 生成 0 到 1 之间的随机浮点数
+// 生成 0 到 1 间的随机浮点数
 double random01() {
     return static_cast<double>(rand()) / RAND_MAX;
 }
