@@ -27,7 +27,6 @@ int main()
   MatrixXd mat_mul = m3 * m4;
   MatrixXd mat_rev = m2.inverse();
 
-
   cout << "m0+m1=" << endl << m0+m1 << endl;
   cout << "m2-m1=" << endl << m2-m1 << endl;
   cout << "m3*2=" << endl << m3*2 << endl;

@@ -20,9 +20,9 @@ void increase_reference(int& value)
     value++;
 }
 
-void increase_ref_pointer(int*& value)
+void increase_ref_pointer(int*& pointer)
 {
-    (*value)++;
+    (*pointer)++;
 }
 
 int main()
