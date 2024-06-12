@@ -443,29 +443,37 @@ vector<Vector3r> fillBox_cpp(Vector3r minCoord, Vector3r maxCoord, Vector3r size
 
 
 //**********************************************************************************
-//generate "packing" of non-overlapping polyhedrons
-vector<Vector3r> my_fillBox_cpp(vector<Vector3r> vec_polyheron, Vector3r sizemin, Vector3r sizemax, shared_ptr<Material> mat)
+//generate "packing" of non-overlapping polyhedrons V2.0
+vector<Vector3r> fillBox_cppV2(vector<Vector3r> vec_polyheron, Vector3r sizemin, Vector3r sizemax, int seed, shared_ptr<Material> mat)
 {
 
-	Polyhedra        trialP;
-	Polyhedron       trial, trial_moved;
+	vector<Vector3r> v;
+	Polyhedra        trialP, boundP;
+	Polyhedron       trial, trial_moved, bound;
+	srand(seed);
+	int                      it = 0;
 	vector<Polyhedron>       polyhedrons;
-
 	vector<vector<Vector3r>> vv;
 	Vector3r                 position;
 	bool                     intersection;
+	bool					 inside_polyhedron;
 	int                      count = 0;
-	int                      it = 0;
 
-	Vector3r maxCoord = {1.0,1.0,1.0}
-	Vector3r minCoord = {0.0,0.0,0.0}
+	Vector3r maxCoord = {1.0, 1.0, 1.0};
+	Vector3r minCoord = {0.0, 0.0, 0.0};
+
+	boundP.v = vec_polyheron;
+	boundP.Initialize();
+	bound = boundP.GetPolyhedron();
 
 	//it - number of trials to make packing possibly more/less dense
+	Vector3r random_size;
 	while (it < 1000) {
 		it = it + 1;
 		if (it == 1) {
 			trialP.Clear();
-			trialP.v = vv;
+			trialP.seed = rand();
+			trialP.size = Vector3r(rand() * (sizemax[0] - sizemin[0]), rand() * (sizemax[1] - sizemin[1]), rand() * (sizemax[2] - sizemin[2])) / RAND_MAX + sizemin;
 			trialP.Initialize();
 			trial                  = trialP.GetPolyhedron();
 			Matrix3r       rot_mat = (trialP.GetOri()).toRotationMatrix();
@@ -486,8 +494,8 @@ vector<Vector3r> my_fillBox_cpp(vector<Vector3r> vec_polyheron, Vector3r sizemin
 		int i = 0;
 		while (i < 100) {
 			position = Vector3r(rand() * (maxCoord[0] - minCoord[0]), rand() * (maxCoord[1] - minCoord[1]), rand() * (maxCoord[2] - minCoord[2])) / RAND_MAX + minCoord;
-			if (Is_inside_Polyhedron(trialP, position, DISTANCE_LIMIT)) {
-				position = position
+			inside_polyhedron = Is_inside_Polyhedron(bound, position, DISTANCE_LIMIT);
+			if (inside_polyhedron) {
 				break;
 			}
 			else {
@@ -524,7 +532,7 @@ vector<Vector3r> my_fillBox_cpp(vector<Vector3r> vec_polyheron, Vector3r sizemin
 			count++;
 		}
 	}
-	cout << "generated " << count << " polyhedrons" << endl;
+	cout << " V2.0 generated" << count << " polyhedrons" << endl;
 
 	//can't be used - no information about material
 	Scene* scene = Omega::instance().getScene().get();
@@ -533,7 +541,7 @@ vector<Vector3r> my_fillBox_cpp(vector<Vector3r> vec_polyheron, Vector3r sizemin
 		BP->shape->color    = Vector3r(double(rand()) / RAND_MAX, double(rand()) / RAND_MAX, double(rand()) / RAND_MAX);
 		scene->bodies->insert(BP);
 	}
-	return v;
+	return vv;
 }
 
 //**************************************************************************
@@ -777,6 +785,7 @@ try {
 	        "Get timestep accoring to the velocity of P-Wave propagation; computed from sphere radii, rigidities and masses.");
 	py::def("do_Polyhedras_Intersect", do_Polyhedras_Intersect, "check polyhedras intersection");
 	py::def("fillBox_cpp", fillBox_cpp, "Generate non-overlaping polyhedrons in box");
+	py::def("fillBox_cppV2", fillBox_cppV2, "Generate non-overlaping polyhedrons in box V2.0");
 	py::def("fillBoxByBalls_cpp", fillBoxByBalls_cpp, "Generate non-overlaping 'spherical' polyhedrons in box");
 	py::def("MinCoord", MinCoord, "returns min coordinates");
 	py::def("MaxCoord", MaxCoord, "returns max coordinates");
