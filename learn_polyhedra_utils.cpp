@@ -14,6 +14,8 @@
 #include <pkg/polyhedra/Polyhedra.hpp>
 #include <numpy/ndarraytypes.h>
 
+#include <pkg/polyhedra/Polyhera_support.hpp>
+
 CREATE_CPP_LOCAL_LOGGER("_polyhedra_utils.cpp");
 
 namespace yade { // Cannot have #include directive inside.
@@ -442,45 +444,28 @@ vector<Vector3r> fillBox_cpp(Vector3r minCoord, Vector3r maxCoord, Vector3r size
 
 //**********************************************************************************
 //generate "packing" of non-overlapping polyhedrons
-vector<Vector3r> my_fillBox_cpp(Vector3r minCoord, Vector3r maxCoord, Vector3r sizemin, Vector3r sizemax, Vector3r ratio, int seed, shared_ptr<Material> mat)
+vector<Vector3r> my_fillBox_cpp(vector<Vector3r> vec_polyheron, Vector3r sizemin, Vector3r sizemax, shared_ptr<Material> mat)
 {
-	// vector<Vector3r>：这部分声明了一个向量，其中的每个元素都是 Vector3r 类型的向量。
-	// 例如vector<Vector3r> v1 可以存储多个三维向量，如 { {1.0, 2.0, 3.0}, {4.0, 5.0, 6.0}, {7.0, 8.0, 9.0} }
-	vector<Vector3r> v;
+
 	Polyhedra        trialP;
 	Polyhedron       trial, trial_moved;
-	srand(seed);
-	int                      it = 0;
 	vector<Polyhedron>       polyhedrons;
 
-	// vector<vector<Vector3r>>声明了一个二维向量，但这次的每个元素都是一个 vector<Vector3r> 类型的向量。
-	//例如 vv = { { {x1, y1, z1}, {x2, y2, z2}, {x3, y3, z3} },
-    //            { {x4, y4, z4}, {x5, y5, z5}, {x6, y6, z6} } }
 	vector<vector<Vector3r>> vv;
 	Vector3r                 position;
 	bool                     intersection;
 	int                      count = 0;
+	int                      it = 0;
 
-	bool fixed_ratio = 0;
-	if (ratio[0] > 0 && ratio[1] > 0 && ratio[2] > 0) {
-		fixed_ratio = 1;
-		sizemax[0]  = min(min(sizemax[0] / ratio[0], sizemax[1] / ratio[1]), sizemax[2] / ratio[2]);
-		sizemin[0]  = max(max(sizemin[0] / ratio[0], sizemin[1] / ratio[1]), sizemin[2] / ratio[2]);
-	}
+	Vector3r maxCoord = {1.0,1.0,1.0}
+	Vector3r minCoord = {0.0,0.0,0.0}
 
 	//it - number of trials to make packing possibly more/less dense
-	Vector3r random_size;
 	while (it < 1000) {
 		it = it + 1;
 		if (it == 1) {
 			trialP.Clear();
-			trialP.seed = rand();
-			if (fixed_ratio) trialP.size = (rand() * (sizemax[0] - sizemin[0]) / RAND_MAX + sizemin[0]) * ratio;
-			else
-				trialP.size
-				        = Vector3r(rand() * (sizemax[0] - sizemin[0]), rand() * (sizemax[1] - sizemin[1]), rand() * (sizemax[2] - sizemin[2]))
-				                / RAND_MAX
-				        + sizemin;
+			trialP.v = vv;
 			trialP.Initialize();
 			trial                  = trialP.GetPolyhedron();
 			Matrix3r       rot_mat = (trialP.GetOri()).toRotationMatrix();
@@ -497,8 +482,18 @@ vector<Vector3r> my_fillBox_cpp(Vector3r minCoord, Vector3r maxCoord, Vector3r s
 			        1);
 			std::transform(trial.points_begin(), trial.points_end(), trial.points_begin(), t_rot);
 		}
-		position = Vector3r(rand() * (maxCoord[0] - minCoord[0]), rand() * (maxCoord[1] - minCoord[1]), rand() * (maxCoord[2] - minCoord[2])) / RAND_MAX
-		        + minCoord;
+
+		int i = 0;
+		while (i < 100) {
+			position = Vector3r(rand() * (maxCoord[0] - minCoord[0]), rand() * (maxCoord[1] - minCoord[1]), rand() * (maxCoord[2] - minCoord[2])) / RAND_MAX + minCoord;
+			if (Is_inside_Polyhedron(trialP, position, DISTANCE_LIMIT)) {
+				position = position
+				break;
+			}
+			else {
+				i = i + 1;
+			}
+		}
 
 		//move CGAL structure Polyhedron
 		Transformation transl(CGAL::TRANSLATION, ToCGALVector(position));
@@ -650,6 +645,7 @@ fillBoxByBalls_cpp(Vector3r minCoord, Vector3r maxCoord, Vector3r sizemin, Vecto
 	int                      it = 0;
 	vector<Polyhedron>       polyhedrons;
 	vector<vector<Vector3r>> vv;
+	
 	Vector3r                 position;
 	bool                     intersection;
 	int                      count = 0;
