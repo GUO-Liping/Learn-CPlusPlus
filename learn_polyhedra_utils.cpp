@@ -458,10 +458,13 @@ vector<Vector3r> fillBox_cppV2(vector<Vector3r> vec_polyheron, Vector3r sizemin,
 	bool                     intersection;
 	bool					 inside_polyhedron;
 	int                      count = 0;
+	const Real DISTANCE_LIMIT = 2E-11;
+
 
 	Vector3r maxCoord = {1.0, 1.0, 1.0};
 	Vector3r minCoord = {0.0, 0.0, 0.0};
 
+	boundP.Clear();
 	boundP.v = vec_polyheron;
 	boundP.Initialize();
 	bound = boundP.GetPolyhedron();
@@ -494,7 +497,8 @@ vector<Vector3r> fillBox_cppV2(vector<Vector3r> vec_polyheron, Vector3r sizemin,
 		int i = 0;
 		while (i < 100) {
 			position = Vector3r(rand() * (maxCoord[0] - minCoord[0]), rand() * (maxCoord[1] - minCoord[1]), rand() * (maxCoord[2] - minCoord[2])) / RAND_MAX + minCoord;
-			inside_polyhedron = Is_inside_Polyhedron(bound, position, DISTANCE_LIMIT);
+			pos_CGAL = CGALpoint(position(0), position(1), position(2));
+			inside_polyhedron = Is_inside_Polyhedron(bound, pos_CGAL, DISTANCE_LIMIT);
 			if (inside_polyhedron) {
 				break;
 			}
@@ -541,8 +545,9 @@ vector<Vector3r> fillBox_cppV2(vector<Vector3r> vec_polyheron, Vector3r sizemin,
 		BP->shape->color    = Vector3r(double(rand()) / RAND_MAX, double(rand()) / RAND_MAX, double(rand()) / RAND_MAX);
 		scene->bodies->insert(BP);
 	}
-	return vv;
+	return v;
 }
+
 
 //**************************************************************************
 /* Generate truncated icosahedron*/

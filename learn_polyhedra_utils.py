@@ -148,6 +148,26 @@ def fillBox(mincoord, maxcoord, material, sizemin=[1, 1, 1], sizemax=[1, 1, 1], 
 
 #**********************************************************************************
 #fill box [mincoord, maxcoord] by non-overlaping polyhedrons with random geometry and sizes within the range (uniformly distributed)
+def fillBoxV2(mincoord, maxcoord, material, sizemin=[1, 1, 1], sizemax=[1, 1, 1], ratio=[0, 0, 0], seed=None, mask=1):
+	"""fill box [mincoord, maxcoord] by non-overlaping polyhedrons with random geometry and sizes within the range (uniformly distributed)
+	:param Vector3 mincoord: first corner
+	:param Vector3 maxcoord: second corner
+	:param Vector3 sizemin: minimal size of bodies
+	:param Vector3 sizemax: maximal size of bodies
+	:param Vector3 ratio: scaling ratio
+	:param float seed: random seed
+	"""
+	random.seed(seed)
+	v = fillBox_cppV2(vec_poly, sizemin, sizemax, random.randint(0, 1E6), material)
+	#lastnan = -1
+	#for i in range(0,len(v)):
+	#	if(math.isnan(v[i][0])):
+	#		O.bodies.append(polyhedra(material,seed=random.randint(0,1E6),v=v[lastnan+1:i],mask=1,fixed=False))
+	#		lastnan = i
+
+
+#**********************************************************************************
+#fill box [mincoord, maxcoord] by non-overlaping polyhedrons with random geometry and sizes within the range (uniformly distributed)
 def fillBoxByBalls(mincoord, maxcoord, material, sizemin=[1, 1, 1], sizemax=[1, 1, 1], ratio=[0, 0, 0], seed=None, mask=1, numpoints=60):
 	random.seed(seed)
 	v = fillBoxByBalls_cpp(mincoord, maxcoord, sizemin, sizemax, ratio, random.randint(0, 1E6), material, numpoints)
